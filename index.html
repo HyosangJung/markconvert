@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MarkConvert</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: #0d0d0d;
+      color: #e8e2d4;
+      font-family: Georgia, 'Times New Roman', serif;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      border-bottom: 1px solid #2a2a2a;
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #0d0d0d;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #c8a96e, #8b6914);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: bold; color: #0d0d0d;
+    }
+    .logo-title { font-size: 17px; font-weight: bold; color: #c8a96e; letter-spacing: 1px; }
+    .logo-sub { font-size: 10px; color: #555; letter-spacing: 2px; text-transform: uppercase; }
+    main {
+      flex: 1;
+      padding: 28px 32px;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .panel { display: flex; flex-direction: column; gap: 8px; }
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    label {
+      font-size: 11px;
+      color: #555;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    textarea {
+      min-height: 480px;
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 8px;
+      color: #d4cfc5;
+      padding: 16px;
+      font-size: 13px;
+      line-height: 1.7;
+      resize: vertical;
+      outline: none;
+      font-family: 'Courier New', monospace;
+      transition: all 0.3s;
+    }
+    #output { color: #a8e6cf; }
+    #output.loading { color: #444; background: #0f0f0f; }
+    .actions { display: flex; gap: 12px; align-items: center; }
+    .btn-convert {
+      background: linear-gradient(135deg, #c8a96e, #8b6914);
+      border: none;
+      color: #0d0d0d;
+      padding: 12px 32px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      font-family: Georgia, serif;
+      letter-spacing: 0.5px;
+      transition: all 0.2s;
+    }
+    .btn-convert:disabled {
+      background: #1a1a1a;
+      color: #444;
+      cursor: not-allowed;
+    }
+    .btn-reset {
+      background: transparent;
+      border: 1px solid #222;
+      color: #555;
+      padding: 12px 20px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    .btn-copy {
+      background: transparent;
+      border: 1px solid #333;
+      color: #555;
+      padding: 3px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      transition: all 0.2s;
+    }
+    .btn-copy.copied {
+      background: #1a3320;
+      border-color: #2d6a4f;
+      color: #52b788;
+    }
+    .error {
+      color: #e07070;
+      font-size: 13px;
+      padding: 8px 12px;
+      background: #1a0f0f;
+      border: 1px solid #3a1f1f;
+      border-radius: 6px;
+      display: none;
+    }
+    footer {
+      border-top: 1px solid #1a1a1a;
+      padding: 12px 32px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #333;
+    }
+    @media (max-width: 700px) {
+      .grid { grid-template-columns: 1fr; }
+      main { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">M</div>
+  <div>
+    <div class="logo-title">MarkConvert</div>
+    <div class="logo-sub">Private Workspace</div>
+  </div>
+</header>
+
+<main>
+  <div class="grid">
+    <div class="panel">
+      <label>원본 텍스트</label>
+      <textarea id="input" placeholder="변환할 텍스트를 붙여넣거나 직접 입력하세요.&#10;&#10;예: HTML, 일반 텍스트, 표, 목록 등 어떤 형식이든 가능합니다."></textarea>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <label>변환된 Markdown</label>
+        <button class="btn-copy" id="copyBtn" onclick="copyOutput()" style="display:none">복사</button>
+      </div>
+      <textarea id="output" readonly placeholder="변환 결과가 여기에 표시됩니다."></textarea>
+    </div>
+  </div>
+  <div class="error" id="error"></div>
+  <div class="actions">
+    <button class="btn-convert" id="convertBtn" onclick="convert()">⚗ Markdown으로 변환</button>
+    <button class="btn-reset" onclick="reset()">초기화</button>
+  </div>
+</main>
+
+<footer>
+  <span>MarkConvert — 개인 전용 워크스페이스</span>
+  <span>Powered by Claude AI</span>
+</footer>
+
+<script>
+  const SYSTEM_PROMPT = `You are an expert document formatter. Convert the given text into clean, well-structured Markdown format.
+
+Rules:
+- Preserve all original content and meaning
+- Add appropriate Markdown syntax: headings (#, ##, ###), bold (**), italic (*), lists (-, 1.), code blocks, tables, blockquotes (>), links, etc.
+- Infer structure from context
+- If the input is already partially in Markdown, improve and complete it
+- Output ONLY the converted Markdown. No explanation, no preamble.`;
+
+  async function convert() {
+    const input = document.getElementById('input').value.trim();
+    if (!input) return;
+
+    const btn = document.getElementById('convertBtn');
+    const output = document.getElementById('output');
+    const errorEl = document.getElementById('error');
+    const copyBtn = document.getElementById('copyBtn');
+
+    btn.disabled = true;
+    btn.textContent = '⟳ 변환 중...';
+    output.value = '';
+    output.classList.add('loading');
+    output.value = '변환 중...';
+    errorEl.style.display = 'none';
+    copyBtn.style.display = 'none';
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 4000,
+          system: SYSTEM_PROMPT,
+          messages: [{ role: 'user', content: input }]
+        })
+      });
+      const data = await res.json();
+      const text = (data.content || []).map(b => b.text || '').join('');
+      output.classList.remove('loading');
+      output.value = text;
+      copyBtn.style.display = 'inline-block';
+    } catch (e) {
+      output.classList.remove('loading');
+      output.value = '';
+      errorEl.textContent = '변환 중 오류가 발생했습니다. 다시 시도해 주세요.';
+      errorEl.style.display = 'block';
+    }
+
+    btn.disabled = false;
+    btn.textContent = '⚗ Markdown으로 변환';
+  }
+
+  function copyOutput() {
+    const output = document.getElementById('output').value;
+    navigator.clipboard.writeText(output);
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ 복사됨';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '복사';
+      btn.classList.remove('copied');
+    }, 2000);
+  }
+
+  function reset() {
+    document.getElementById('input').value = '';
+    document.getElementById('output').value = '';
+    document.getElementById('error').style.display = 'none';
+    document.getElementById('copyBtn').style.display = 'none';
+  }
+</script>
+</body>
+</html>
