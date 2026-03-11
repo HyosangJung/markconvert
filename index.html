@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MarkConvert</title>
+  <title>WikiConvert</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -27,12 +27,12 @@
     }
     .logo {
       width: 36px; height: 36px;
-      background: linear-gradient(135deg, #c8a96e, #8b6914);
+      background: linear-gradient(135deg, #6ea8c8, #145e8b);
       border-radius: 6px;
       display: flex; align-items: center; justify-content: center;
       font-size: 18px; font-weight: bold; color: #0d0d0d;
     }
-    .logo-title { font-size: 17px; font-weight: bold; color: #c8a96e; letter-spacing: 1px; }
+    .logo-title { font-size: 17px; font-weight: bold; color: #6ea8c8; letter-spacing: 1px; }
     .logo-sub { font-size: 10px; color: #555; letter-spacing: 2px; text-transform: uppercase; }
     main {
       flex: 1;
@@ -60,7 +60,7 @@
       text-transform: uppercase;
     }
     textarea {
-      min-height: 480px;
+      min-height: 520px;
       background: #111;
       border: 1px solid #222;
       border-radius: 8px;
@@ -71,13 +71,11 @@
       resize: vertical;
       outline: none;
       font-family: 'Courier New', monospace;
-      transition: all 0.3s;
     }
     #output { color: #a8e6cf; }
-    #output.loading { color: #444; background: #0f0f0f; }
-    .actions { display: flex; gap: 12px; align-items: center; }
+    .actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
     .btn-convert {
-      background: linear-gradient(135deg, #c8a96e, #8b6914);
+      background: linear-gradient(135deg, #6ea8c8, #145e8b);
       border: none;
       color: #0d0d0d;
       padding: 12px 32px;
@@ -89,11 +87,7 @@
       letter-spacing: 0.5px;
       transition: all 0.2s;
     }
-    .btn-convert:disabled {
-      background: #1a1a1a;
-      color: #444;
-      cursor: not-allowed;
-    }
+    .btn-convert:hover { opacity: 0.9; }
     .btn-reset {
       background: transparent;
       border: 1px solid #222;
@@ -102,7 +96,6 @@
       border-radius: 7px;
       cursor: pointer;
       font-size: 13px;
-      transition: all 0.2s;
     }
     .btn-copy {
       background: transparent;
@@ -119,14 +112,21 @@
       border-color: #2d6a4f;
       color: #52b788;
     }
-    .error {
-      color: #e07070;
-      font-size: 13px;
-      padding: 8px 12px;
-      background: #1a0f0f;
-      border: 1px solid #3a1f1f;
-      border-radius: 6px;
-      display: none;
+    .badge {
+      display: inline-flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .badge span {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      color: #6ea8c8;
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0.5px;
     }
     footer {
       border-top: 1px solid #1a1a1a;
@@ -145,18 +145,29 @@
 <body>
 
 <header>
-  <div class="logo">M</div>
+  <div class="logo">W</div>
   <div>
-    <div class="logo-title">MarkConvert</div>
-    <div class="logo-sub">Private Workspace</div>
+    <div class="logo-title">WikiConvert</div>
+    <div class="logo-sub">나무위키 · 위키문법 → Markdown</div>
   </div>
 </header>
 
 <main>
+  <div class="badge">
+    <span>== 제목 ==</span>
+    <span>'''굵게'''</span>
+    <span>''기울임''</span>
+    <span>[[링크]]</span>
+    <span>|| 표 ||</span>
+    <span>[include(...)]</span>
+    <span>[목차]</span>
+    <span>{{{#!wiki}}}</span>
+  </div>
+
   <div class="grid">
     <div class="panel">
-      <label>원본 텍스트</label>
-      <textarea id="input" placeholder="변환할 텍스트를 붙여넣거나 직접 입력하세요.&#10;&#10;예: HTML, 일반 텍스트, 표, 목록 등 어떤 형식이든 가능합니다."></textarea>
+      <label>나무위키 / 위키 문법</label>
+      <textarea id="input" placeholder="나무위키 문법을 붙여넣으세요.&#10;&#10;예:&#10;== 개요 ==&#10;'''미필적 고의'''는 [[법률]] 용어 중 하나로...&#10;&#10;=== 상세 ===&#10;* 항목 1&#10;* 항목 2"></textarea>
     </div>
     <div class="panel">
       <div class="panel-header">
@@ -166,90 +177,165 @@
       <textarea id="output" readonly placeholder="변환 결과가 여기에 표시됩니다."></textarea>
     </div>
   </div>
-  <div class="error" id="error"></div>
+
   <div class="actions">
-    <button class="btn-convert" id="convertBtn" onclick="convert()">⚗ Markdown으로 변환</button>
+    <button class="btn-convert" onclick="convert()">⚗ Markdown으로 변환</button>
     <button class="btn-reset" onclick="reset()">초기화</button>
   </div>
 </main>
 
 <footer>
-  <span>MarkConvert — 개인 전용 워크스페이스</span>
-  <span>Powered by Claude AI</span>
+  <span>WikiConvert — 완전 무료 · 오프라인 작동</span>
+  <span>API 불필요</span>
 </footer>
 
 <script>
-  const SYSTEM_PROMPT = `You are an expert document formatter. Convert the given text into clean, well-structured Markdown format.
+function convert() {
+  const input = document.getElementById('input').value;
+  if (!input.trim()) return;
 
-Rules:
-- Preserve all original content and meaning
-- Add appropriate Markdown syntax: headings (#, ##, ###), bold (**), italic (*), lists (-, 1.), code blocks, tables, blockquotes (>), links, etc.
-- Infer structure from context
-- If the input is already partially in Markdown, improve and complete it
-- Output ONLY the converted Markdown. No explanation, no preamble.`;
+  let text = input;
 
-  async function convert() {
-    const input = document.getElementById('input').value.trim();
-    if (!input) return;
+  // [목차], [include(...)], [youtube(...)] 제거
+  text = text.replace(/\[목차\]/g, '');
+  text = text.replace(/\[include\([^\)]*\)\]/g, '');
+  text = text.replace(/\[youtube\([^\)]*\)\]/g, '');
+  text = text.replace(/\[br\]/gi, '\n');
 
-    const btn = document.getElementById('convertBtn');
-    const output = document.getElementById('output');
-    const errorEl = document.getElementById('error');
-    const copyBtn = document.getElementById('copyBtn');
+  // {{{#!wiki ...}}} 블록 — 내용만 추출
+  text = text.replace(/\{\{\{#!wiki[^\n]*\n([\s\S]*?)\}\}\}/g, (_, inner) => inner.trim());
 
-    btn.disabled = true;
-    btn.textContent = '⟳ 변환 중...';
-    output.value = '';
-    output.classList.add('loading');
-    output.value = '변환 중...';
-    errorEl.style.display = 'none';
-    copyBtn.style.display = 'none';
+  // {{{ }}} 인라인 코드
+  text = text.replace(/\{\{\{([^\n\}]+)\}\}\}/g, '`$1`');
 
-    try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 4000,
-          system: SYSTEM_PROMPT,
-          messages: [{ role: 'user', content: input }]
-        })
+  // 각주 [* ...] → (각주: ...)
+  text = text.replace(/\[\*\s*(.*?)\]/g, (_, note) => ` *(각주: ${note.trim()})*`);
+
+  // 나무위키 제목 (== 제목 ==) — 레벨별
+  text = text.replace(/^======\s*(.+?)\s*======$/gm, '###### $1');
+  text = text.replace(/^=====\s*(.+?)\s*=====$/gm, '##### $1');
+  text = text.replace(/^====\s*(.+?)\s*====$/gm, '#### $1');
+  text = text.replace(/^===\s*(.+?)\s*===$/gm, '### $1');
+  text = text.replace(/^==\s*(.+?)\s*==$/gm, '## $1');
+  text = text.replace(/^=\s*(.+?)\s*=$/gm, '# $1');
+
+  // 굵게 기울임 '''''text'''''
+  text = text.replace(/'''''(.+?)'''''/g, '***$1***');
+  // 굵게 '''text'''
+  text = text.replace(/'''(.+?)'''/g, '**$1**');
+  // 기울임 ''text''
+  text = text.replace(/''(.+?)''/g, '*$1*');
+
+  // 취소선 ~~text~~
+  text = text.replace(/~~(.+?)~~/g, '~~$1~~');
+
+  // 밑줄 __text__ → <u>text</u>
+  text = text.replace(/__(.+?)__/g, '<u>$1</u>');
+
+  // 색상/크기 텍스트 {{{#color text}}} → text
+  text = text.replace(/\{\{\{#[a-zA-Z0-9,]+\s+([\s\S]+?)\}\}\}/g, '$1');
+
+  // 나무위키 링크
+  // [[링크|표시]] → [표시](링크)
+  text = text.replace(/\[\[([^\]\|]+)\|([^\]]+)\]\]/g, '[$2]($1)');
+  // [[링크]] → [링크](링크)
+  text = text.replace(/\[\[([^\]]+)\]\]/g, '[$1]($1)');
+
+  // 외부 링크 [[https://... 텍스트]] → [텍스트](url)
+  text = text.replace(/\[\[(https?:\/\/[^\s\]]+)\s+([^\]]+)\]\]/g, '[$2]($1)');
+
+  // 수평선
+  text = text.replace(/^----+$/gm, '---');
+
+  // 나무위키 표 처리
+  text = convertTable(text);
+
+  // 인용 >
+  text = text.replace(/^>(.*)/gm, '> $1');
+
+  // 순서없는 목록 (* → -)
+  text = text.replace(/^\s*\*\s+/gm, '- ');
+
+  // 순서있는 목록 (1. 은 그대로)
+  // 들여쓰기 목록
+  text = text.replace(/^ {1,2}\*\s+/gm, '  - ');
+  text = text.replace(/^ {3,4}\*\s+/gm, '    - ');
+
+  // 코드 블록 {{{ }}}
+  text = text.replace(/^\{\{\{$/gm, '```');
+  text = text.replace(/^\}\}\}$/gm, '```');
+
+  // [[분류:...]] 제거
+  text = text.replace(/\[\[분류:[^\]]*\]\]/g, '');
+  text = text.replace(/\[\[Category:[^\]]*\]\]/gi, '');
+
+  // 빈 줄 3개 이상 → 2개로
+  text = text.replace(/\n{3,}/g, '\n\n');
+
+  // 앞뒤 공백 정리
+  text = text.trim();
+
+  document.getElementById('output').value = text;
+  document.getElementById('copyBtn').style.display = 'inline-block';
+}
+
+function convertTable(text) {
+  const lines = text.split('\n');
+  const result = [];
+  let inTable = false;
+  let rowCount = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+
+    // 나무위키 표: ||로 시작하고 끝나는 줄
+    if (line.startsWith('||') && line.endsWith('||')) {
+      // 셀 파싱
+      const raw = line.slice(2, -2); // 앞뒤 || 제거
+      const cells = raw.split('||').map(c => {
+        // <tablealign=...> 등 속성 제거
+        return c.replace(/<[^>]+>/g, '').trim();
       });
-      const data = await res.json();
-      const text = (data.content || []).map(b => b.text || '').join('');
-      output.classList.remove('loading');
-      output.value = text;
-      copyBtn.style.display = 'inline-block';
-    } catch (e) {
-      output.classList.remove('loading');
-      output.value = '';
-      errorEl.textContent = '변환 중 오류가 발생했습니다. 다시 시도해 주세요.';
-      errorEl.style.display = 'block';
+
+      const mdRow = '| ' + cells.join(' | ') + ' |';
+
+      if (!inTable) {
+        inTable = true;
+        rowCount = 0;
+        result.push(mdRow);
+        // 헤더 구분선
+        result.push('| ' + cells.map(() => '---').join(' | ') + ' |');
+      } else {
+        result.push(mdRow);
+      }
+      rowCount++;
+    } else {
+      inTable = false;
+      rowCount = 0;
+      result.push(lines[i]);
     }
-
-    btn.disabled = false;
-    btn.textContent = '⚗ Markdown으로 변환';
   }
 
-  function copyOutput() {
-    const output = document.getElementById('output').value;
-    navigator.clipboard.writeText(output);
-    const btn = document.getElementById('copyBtn');
-    btn.textContent = '✓ 복사됨';
-    btn.classList.add('copied');
-    setTimeout(() => {
-      btn.textContent = '복사';
-      btn.classList.remove('copied');
-    }, 2000);
-  }
+  return result.join('\n');
+}
 
-  function reset() {
-    document.getElementById('input').value = '';
-    document.getElementById('output').value = '';
-    document.getElementById('error').style.display = 'none';
-    document.getElementById('copyBtn').style.display = 'none';
-  }
+function copyOutput() {
+  const output = document.getElementById('output').value;
+  navigator.clipboard.writeText(output);
+  const btn = document.getElementById('copyBtn');
+  btn.textContent = '✓ 복사됨';
+  btn.classList.add('copied');
+  setTimeout(() => {
+    btn.textContent = '복사';
+    btn.classList.remove('copied');
+  }, 2000);
+}
+
+function reset() {
+  document.getElementById('input').value = '';
+  document.getElementById('output').value = '';
+  document.getElementById('copyBtn').style.display = 'none';
+}
 </script>
 </body>
 </html>
