@@ -271,7 +271,6 @@ function convert() {
   // ── 13. 빈 줄 정리 ────────────────────────────────
   t = t.replace(/\n{3,}/g, '\n\n');
   t = '나무위키 발췌\n\n' + t.trim();
-  t = '> [!note] 나무위키 발췌\n\n' + t;
 
   outputEl.value = t;
   copyBtn.style.display = 'inline-block';
