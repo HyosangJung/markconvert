@@ -188,7 +188,7 @@ function convert() {
   // ── 1. 나무위키 메타 제거 ──────────────────────────
   t = t.replace(/\[목차\]/g, '');
   t = t.replace(/\[include\([^)]*\)\]/g, '');
-  t = t.replace(/\[youtube\([^)]*\)\]/g, '');
+  t = t.replace(/\[youtube\(([^,)]+)[^)]*\)\]/g, (_, id) => `[YouTube](https://youtu.be/${id.trim()})`);
   t = t.replace(/\[age\([^)]*\)\]/g, '');
   t = t.replace(/\[dday\([^)]*\)\]/g, '');
   t = t.replace(/\[br\]/gi, '\n');
@@ -211,14 +211,8 @@ function convert() {
   // {{{ 인라인 코드 }}}
   t = t.replace(/\{\{\{([^\n{}]+)\}\}\}/g, '`$1`');
 
-  // ── 4. 각주 → 마크다운 풋노트 ───────────────────────
-  const footnotes = [];
-  let fnIndex = 0;
-  t = t.replace(/\[\*\s*([^\]]+)\]/g, (_, note) => {
-    fnIndex++;
-    footnotes.push(`[^${fnIndex}]: ${note.trim()}`);
-    return `[^${fnIndex}]`;
-  });
+  // ── 4. 각주 → 옵시디안 인라인 풋노트 ^[내용] ────────
+  t = t.replace(/\[\*\s*([^\]]+)\]/g, (_, note) => `^[${note.trim()}]`);
 
   // ── 5. 링크 처리 ──────────────────────────────────
   // [[https://...|표시]] → [표시](url)  ← 클릭 가능
@@ -270,11 +264,6 @@ function convert() {
 
   // ── 13. 빈 줄 정리 ────────────────────────────────
   t = t.replace(/\n{3,}/g, '\n\n');
-  // ── 풋노트 추가 ─────────────────────────────────
-  if (footnotes.length > 0) {
-    t = t + '\n\n' + footnotes.join('\n');
-  }
-
   t = t.trim();
 
   outputEl.value = t;
