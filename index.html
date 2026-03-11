@@ -198,6 +198,8 @@ function convert() {
   t = t.replace(/\[age\([^)]*\)\]/g, '');
   t = t.replace(/\[dday\([^)]*\)\]/g, '');
   t = t.replace(/\[br\]/gi, '\n');
+  // 웹페이지 복사 시 따라오는 각주 번호 제거 [1], [62] 등
+  t = t.replace(/\[\d+\]/g, '');
   t = t.replace(/\[\[분류:[^\]]*\]\]/g, '');
   t = t.replace(/\[\[Category:[^\]]*\]\]/gi, '');
 
