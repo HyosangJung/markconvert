@@ -193,7 +193,7 @@ function convert() {
 
   // ── 1. 나무위키 메타 제거 ──────────────────────────
   t = t.replace(/\[목차\]/g, '');
-  t = t.replace(/\[include\([^)]*\)\]/g, '');
+  t = t.replace(/\[include\([\s\S]*?\)\]/g, '');
   t = t.replace(/\[youtube\(([^,)]+)[^)]*\)\]/g, (_, id) => `[YouTube](https://youtu.be/${id.trim()})`);
   t = t.replace(/\[age\([^)]*\)\]/g, '');
   t = t.replace(/\[dday\([^)]*\)\]/g, '');
